@@ -1,9 +1,3 @@
-[submodule "ST1010"]
-	path = ./Apps/ST1010
-	url = https://github.com/Senpumaru/COS-ST1010.git
-[submodule "ST1011"]
-	path = ./Apps/ST1011
-	url = https://github.com/Senpumaru/COS-ST1011.git
 [submodule "Backend"]
 	path = Backend
 	url = https://github.com/Senpumaru/COS-Backend.git
