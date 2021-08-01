@@ -4,11 +4,11 @@ version: "3.2"
 networks:
   network_nginx_rev_proxy:
     driver: bridge
-  network_postgres_alpha:
+  network_postgres_cos:
     driver: bridge
-  network_alpha:
+  network_st1010:
     driver: bridge
-  network_beta:
+  network_st1011:
     driver: bridge
 
 volumes:
@@ -16,109 +16,111 @@ volumes:
   volume_django_static:
   volume_django_media:
   # PostgreSQL data volumes will be mounted to PostgreSQL services
-  postgres_alpha_volume:
+  postgres_cos_volume:
   # Frontend #
-  volume_alpha:
-  volume_beta:
+  volume_st1010:
+  volume_st1011:
 
 services:
    ## Nginx Service ##
   nginx:
     hostname: Nginx
-    container_name: Nginx-Reverse-Proxy
+    container_name: Nginx-COS-Test
     image: nginx:1.21.1
     restart: unless-stopped
     # Custom network
     networks:
       - network_nginx_rev_proxy
-      - network_alpha
-      - network_beta
+      - network_st1010
+      - network_st1011
     ports:
       - 80:80
     volumes:
       - ./Nginx/Testing/default.conf:/etc/nginx/conf.d/default.conf
       # Same as Backend volumes
-      - volume_django_static:/Backend/static
-      - volume_django_media:/Backend/media
+      - volume_django_static:/Backend/Django/static
+      - volume_django_media:/Backend/Django/media
     # Wait for other services to "Compose" #
     depends_on:
       - backend
-      - react_alpha
-      - react_beta
+      - st1010
+      - st1011
 
   ## Backend ##
   # Django #
   backend:
     image: backend/django:testing
     hostname: DjangoBackend
-    container_name: Django-Backend
+    container_name: Backend-COS-Test
     restart: unless-stopped
     # Custom network
     networks:
       - network_nginx_rev_proxy
-      - network_postgres_alpha
+      - network_postgres_cos
     build:
       context: .
       dockerfile: ./Backend/Docker/Testing/Dockerfile
     volumes:
-      - volume_django_static:/Backend/static
-      - volume_django_media:/Backend/media
+      - volume_django_static:/Backend/Django/static
+      - volume_django_media:/Backend/Django/media
     # Check ENV file in host directory (relative)
     env_file:
       - ./Backend/Docker/Testing/.env
     depends_on:
-      - postgres_alpha
+      - postgres_cos
 
   ## Databases ##
-  postgres_alpha:
-    image: postgres/alpha:testing
-    hostname: PostgresAlpha
-    container_name: PostgreSQL-Alpha
+  postgres_cos:
+    image: postgres/cos:testing
+    hostname: PostgresCOS
+    container_name: PostgreSQL-COS-Test
     restart: unless-stopped
     build:
       context: .
       dockerfile: ./Database/Testing/PostgresAlpha/Dockerfile
     networks: # Connect to the bridge
-      - network_postgres_alpha
+      - network_postgres_cos
     # Port 5432 is exposed in the ENV files and DATABASE settings
     volumes:
-      - postgres_alpha_volume:/var/lib/postgresql/data/
+      - postgres_cos_volume:/var/lib/postgresql/data/
     # Check ENV for Database values
     env_file:
       - ./Database/Testing/PostgresAlpha/.env
 
   ## Frontend Apps ##
   # React Apps #
-  react_alpha:
-      image: react/alpha:testing
-      hostname: ReactAlpha
-      container_name: React-Alpha
+  st1010:
+      image: cos-apps/st1010:testing
+      hostname: ST1010
+      container_name: React-ST1010-Test
       build:
           # Relative directory
-          context: ./Frontend/alpha
+          context: ./Apps/ST1010
           dockerfile: ./Docker/Testing/Dockerfile
       networks:
-          - network_alpha
+        - network_nginx_rev_proxy
+        - network_st1010
       ports:
         - 3000:80
       volumes:
         - type: volume
-          source: volume_alpha
+          source: volume_st1010
           target: /usr/share/nginx/html
 
-  react_beta:
-      image: react/beta:testing
-      hostname: ReactBeta
-      container_name: React-Beta
+  st1011:
+      image: cos-apps/st1011:testing
+      hostname: ST1011
+      container_name: React-ST1011-Test
       build:
           # Relative directory
-          context: ./Frontend/beta
+          context: ./Apps/ST1011
           dockerfile: ./Docker/Testing/Dockerfile
       networks:
-          - network_beta
+        - network_nginx_rev_proxy
+        - network_st1011
       ports:
         - 3001:80
       volumes:
         - type: volume
-          source: volume_beta
+          source: volume_st1011
           target: /usr/share/nginx/html

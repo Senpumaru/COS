@@ -4,11 +4,11 @@ version: "3.2"
 networks:
   network_nginx_rev_proxy:
     driver: bridge
-  network_postgres_alpha:
+  network_postgres_cos:
     driver: bridge
-  network_alpha:
+  network_st1010:
     driver: bridge
-  network_beta:
+  network_st1011:
     driver: bridge
 
 volumes:
@@ -16,13 +16,13 @@ volumes:
   volume_django_static:
   volume_django_media:
   # PostgreSQL data volumes will be mounted to PostgreSQL services
-  postgres_alpha_volume:
+  postgres_cos_volume:
 
 services:
   ## Nginx Service ##
   nginx:
     hostname: Nginx
-    container_name: Nginx-Reverse-Proxy-Dev
+    container_name: Nginx-COS-Dev
     image: nginx:1.21.1
     restart: unless-stopped
     # Custom network
@@ -33,24 +33,24 @@ services:
     volumes:
       - ./Nginx/Development/default.conf:/etc/nginx/conf.d/default.conf
       # Same as Backend volumes
-      - volume_django_static:/Backend/static
-      - volume_django_media:/Backend/media
+      - volume_django_static:/Backend/Django/static
+      - volume_django_media:/Backend/Django/media
     # Wait for other services to "Compose" #
     depends_on:
       - backend
-      - react_alpha
-      - react_beta
+      - st1010
+      - st1011
   ## Backend ##
   # Django #
   backend:
     image: backend/django:development
     hostname: DjangoBackend
-    container_name: Django-Backend-Dev
+    container_name: Backend-COS-Dev
     restart: unless-stopped
     # Custom network
     networks:
       - network_nginx_rev_proxy
-      - network_postgres_alpha
+      - network_postgres_cos
     build:
       context: .
       dockerfile: ./Backend/Docker/Development/Dockerfile
@@ -58,66 +58,66 @@ services:
       - type: bind
         source: ./Backend
         target: /Backend
-      - volume_django_static:/Backend/static
-      - volume_django_media:/Backend/media
+      - volume_django_static:/Backend/Django/static
+      - volume_django_media:/Backend/Django/media
     # Check ENV file in host directory (relative)
     env_file:
       - ./Backend/Docker/Development/.env
     depends_on:
-      - postgres_alpha
+      - postgres_cos
 
   ## Databases ##
-  postgres_alpha:
-    image: postgres/alpha:development
-    hostname: PostgresAlpha
-    container_name: PostgreSQL-Alpha-Dev
+  postgres_cos:
+    image: postgres/cos:development
+    hostname: PostgresCOS
+    container_name: PostgreSQL-COS-Dev
     restart: unless-stopped
     build:
       context: .
       dockerfile: ./Database/Development/PostgresAlpha/Dockerfile
     networks: # Connect to the bridge
-      - network_postgres_alpha
+      - network_postgres_cos
     # Port 5432 is exposed in the ENV files and DATABASE settings
     volumes:
-      - postgres_alpha_volume:/var/lib/postgresql/data/
+      - postgres_cos_volume:/var/lib/postgresql/data/
     # Check ENV for Database values
     env_file:
       - ./Database/Development/PostgresAlpha/.env
   ## Frontend Apps ##
   # React Apps #
-  react_alpha:
-      image: react/alpha:development
-      hostname: ReactAlpha
-      container_name: React-Alpha-Dev
+  st1010:
+      image: cos-apps/st1010:development
+      hostname: ST1010
+      container_name: React-ST1010-Dev
       restart: unless-stopped
       build:
           # Relative directory
-          context: ./Frontend/alpha
+          context: ./Apps/ST1010
           dockerfile: ./Docker/Development/Dockerfile
       networks:
         - network_nginx_rev_proxy
-        - network_alpha
+        - network_st1010
       ports:
         - 3000:3000
       volumes:
         - type: bind
-          source: ./Frontend/alpha
+          source: ./Apps/ST1010
           target: /usr/app
-  react_beta:
-      image: react/beta:development
-      hostname: ReactBeta
-      container_name: React-Beta-Dev
+  st1011:
+      image: cos-apps/st1011:development
+      hostname: ST1011
+      container_name: React-ST1011-Dev
       restart: unless-stopped
       build:
           # Relative directory
-          context: ./Frontend/beta
+          context: ./Apps/ST1011
           dockerfile: ./Docker/Development/Dockerfile
       networks:
         - network_nginx_rev_proxy
-        - network_beta
+        - network_st1011
       ports:
         - 3001:3000
       volumes:
         - type: bind
-          source: ./Frontend/beta
+          source: ./Apps/ST1011
           target: /usr/app
