@@ -1,6 +1,6 @@
 [submodule "ST1010"]
-	path = ST1010
+	path = ./Apps/ST1010
 	url = ./Apps/ST1010
 [submodule "ST1011"]
-	path = ST1011
+	path = ./Apps/ST1011
 	url = ./Apps/ST1011
