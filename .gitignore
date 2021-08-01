@@ -1,0 +1,16 @@
+# Environments
+.env
+.env.db
+
+# Directories
+Env
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Notebooks
+.ipynb_checkpoints/
