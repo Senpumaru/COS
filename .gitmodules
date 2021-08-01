@@ -4,3 +4,6 @@
 [submodule "ST1011"]
 	path = ./Apps/ST1011
 	url = ./Apps/ST1011
+[submodule "Backend"]
+	path = Backend
+	url = https://github.com/Senpumaru/COS-Backend.git
