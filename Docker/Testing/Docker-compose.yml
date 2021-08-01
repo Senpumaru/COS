@@ -1,0 +1,124 @@
+version: "3.2"
+
+## Custom network ##
+networks:
+  network_nginx_rev_proxy:
+    driver: bridge
+  network_postgres_alpha:
+    driver: bridge
+  network_alpha:
+    driver: bridge
+  network_beta:
+    driver: bridge
+
+volumes:
+  # Static / media volume will be mounted to both Nginx and Django runserver.
+  volume_django_static:
+  volume_django_media:
+  # PostgreSQL data volumes will be mounted to PostgreSQL services
+  postgres_alpha_volume:
+  # Frontend #
+  volume_alpha:
+  volume_beta:
+
+services:
+   ## Nginx Service ##
+  nginx:
+    hostname: Nginx
+    container_name: Nginx-Reverse-Proxy
+    image: nginx:1.21.1
+    restart: unless-stopped
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+      - network_alpha
+      - network_beta
+    ports:
+      - 80:80
+    volumes:
+      - ./Nginx/Testing/default.conf:/etc/nginx/conf.d/default.conf
+      # Same as Backend volumes
+      - volume_django_static:/Backend/static
+      - volume_django_media:/Backend/media
+    # Wait for other services to "Compose" #
+    depends_on:
+      - backend
+      - react_alpha
+      - react_beta
+
+  ## Backend ##
+  # Django #
+  backend:
+    image: backend/django:testing
+    hostname: DjangoBackend
+    container_name: Django-Backend
+    restart: unless-stopped
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+      - network_postgres_alpha
+    build:
+      context: .
+      dockerfile: ./Backend/Docker/Testing/Dockerfile
+    volumes:
+      - volume_django_static:/Backend/static
+      - volume_django_media:/Backend/media
+    # Check ENV file in host directory (relative)
+    env_file:
+      - ./Backend/Docker/Testing/.env
+    depends_on:
+      - postgres_alpha
+
+  ## Databases ##
+  postgres_alpha:
+    image: postgres/alpha:testing
+    hostname: PostgresAlpha
+    container_name: PostgreSQL-Alpha
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./Database/Testing/PostgresAlpha/Dockerfile
+    networks: # Connect to the bridge
+      - network_postgres_alpha
+    # Port 5432 is exposed in the ENV files and DATABASE settings
+    volumes:
+      - postgres_alpha_volume:/var/lib/postgresql/data/
+    # Check ENV for Database values
+    env_file:
+      - ./Database/Testing/PostgresAlpha/.env
+
+  ## Frontend Apps ##
+  # React Apps #
+  react_alpha:
+      image: react/alpha:testing
+      hostname: ReactAlpha
+      container_name: React-Alpha
+      build:
+          # Relative directory
+          context: ./Frontend/alpha
+          dockerfile: ./Docker/Testing/Dockerfile
+      networks:
+          - network_alpha
+      ports:
+        - 3000:80
+      volumes:
+        - type: volume
+          source: volume_alpha
+          target: /usr/share/nginx/html
+
+  react_beta:
+      image: react/beta:testing
+      hostname: ReactBeta
+      container_name: React-Beta
+      build:
+          # Relative directory
+          context: ./Frontend/beta
+          dockerfile: ./Docker/Testing/Dockerfile
+      networks:
+          - network_beta
+      ports:
+        - 3001:80
+      volumes:
+        - type: volume
+          source: volume_beta
+          target: /usr/share/nginx/html
