@@ -6,7 +6,7 @@ Run <br />
 docker-compose --project-directory . --file ./Docker/Development/Docker-compose.yml --project-name cos-dev up --build
 ### Containers:
 Backend: <br />
-./manage.py collecstatic --no-input <br />
+./manage.py collecsttatic --no-input <br />
 ./manage.py makemigrations <br />
 ./manage.py migrate <br />
 
