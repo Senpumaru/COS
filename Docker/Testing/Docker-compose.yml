@@ -17,9 +17,7 @@ volumes:
   volume_django_media:
   # PostgreSQL data volumes will be mounted to PostgreSQL services
   postgres_cos_volume:
-  # Frontend #
-  volume_st1010:
-  volume_st1011:
+
 
 services:
    ## Nginx Service ##
@@ -98,19 +96,14 @@ services:
           context: ./Apps/ST1010
           dockerfile: ./Docker/Testing/Dockerfile
           args:
-            REACT_APP_HOST_IP_ADDRESS: localhost
+            REACT_APP_API_SERVER: http://cos.omr/
       networks:
         - network_nginx_rev_proxy
         - network_st1010
       ports:
         - 3000:80
-      volumes:
-        - type: volume
-          source: volume_st1010
-          target: /usr/share/nginx/html
       environment:
-        - REACT_APP_DEBUG=TRUE
-        - REACT_APP_NAME=Test2
+        - REACT_APP_API_SERVER=http://cos.omr/
 
   st1011:
       image: cos-apps/st1011:testing
@@ -120,14 +113,12 @@ services:
           # Relative directory
           context: ./Apps/ST1011
           dockerfile: ./Docker/Testing/Dockerfile
+          args:
+            REACT_APP_API_SERVER: http://cos.omr/
       networks:
         - network_nginx_rev_proxy
         - network_st1011
       ports:
         - 3001:80
-      volumes:
-        - type: volume
-          source: volume_st1011
-          target: /usr/share/nginx/html
       environment: 
-        - REACT_APP_NAME=Test2
+        - REACT_APP_API_SERVER=http://cos.omr/
