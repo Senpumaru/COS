@@ -86,7 +86,7 @@ services:
       context: .
       dockerfile: ./Backend/Docker/Testing/Dockerfile
     command: gunicorn --chdir /Backend --bind 0.0.0.0:8000 --reload Config.wsgi:application
-      volumes:
+    volumes:
       - volume_django_static:/Backend/Django/static
       - volume_django_media:/Backend/Django/media
     # Check ENV file in host directory (relative)
