@@ -41,6 +41,35 @@ services:
       - st1010
       - st1011
   ## Backend ##
+  # Redis #
+  redis:
+    image: redis:6.2.5-alpine
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+  celery:
+    image: backend/celery:development
+    hostname: Celery-Worker
+    container_name: Celery-Worker-COS-Dev
+    build:
+      context: .
+      dockerfile: ./Backend/Docker/Development/Dockerfile
+    command: celery -A Config worker -l INFO
+    restart: always
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+    volumes:
+      - type: bind
+        source: ./Backend
+        target: /Backend
+    # Check ENV file in host directory (relative)
+    env_file:
+      - ./Backend/Docker/Development/.env
+    depends_on:
+      - redis
+      - backend
+      - postgres_cos
   # Django #
   backend:
     image: backend/django:development
@@ -54,6 +83,7 @@ services:
     build:
       context: .
       dockerfile: ./Backend/Docker/Development/Dockerfile
+    command: gunicorn --chdir /Backend --bind 0.0.0.0:8000 --reload Config.wsgi:application
     volumes:
       - type: bind
         source: ./Backend
@@ -86,38 +116,38 @@ services:
   ## Frontend Apps ##
   # React Apps #
   st1010:
-      image: cos-apps/st1010:development
-      hostname: ST1010
-      container_name: React-ST1010-Dev
-      restart: unless-stopped
-      build:
-          # Relative directory
-          context: ./Apps/ST1010
-          dockerfile: ./Docker/Development/Dockerfile
-      networks:
-        - network_nginx_rev_proxy
-        - network_st1010
-      ports:
-        - 3000:3000
-      volumes:
-        - type: bind
-          source: ./Apps/ST1010
-          target: /usr/app
+    image: cos-apps/st1010:development
+    hostname: ST1010
+    container_name: React-ST1010-Dev
+    restart: unless-stopped
+    build:
+      # Relative directory
+      context: ./Apps/ST1010
+      dockerfile: ./Docker/Development/Dockerfile
+    networks:
+      - network_nginx_rev_proxy
+      - network_st1010
+    ports:
+      - 3000:3000
+    volumes:
+      - type: bind
+        source: ./Apps/ST1010
+        target: /usr/app
   st1011:
-      image: cos-apps/st1011:development
-      hostname: ST1011
-      container_name: React-ST1011-Dev
-      restart: unless-stopped
-      build:
-          # Relative directory
-          context: ./Apps/ST1011
-          dockerfile: ./Docker/Development/Dockerfile
-      networks:
-        - network_nginx_rev_proxy
-        - network_st1011
-      ports:
-        - 3001:3000
-      volumes:
-        - type: bind
-          source: ./Apps/ST1011
-          target: /usr/app
+    image: cos-apps/st1011:development
+    hostname: ST1011
+    container_name: React-ST1011-Dev
+    restart: unless-stopped
+    build:
+      # Relative directory
+      context: ./Apps/ST1011
+      dockerfile: ./Docker/Development/Dockerfile
+    networks:
+      - network_nginx_rev_proxy
+      - network_st1011
+    ports:
+      - 3001:3000
+    volumes:
+      - type: bind
+        source: ./Apps/ST1011
+        target: /usr/app
