@@ -18,9 +18,8 @@ volumes:
   # PostgreSQL data volumes will be mounted to PostgreSQL services
   postgres_cos_volume:
 
-
 services:
-   ## Nginx Service ##
+  ## Nginx Service ##
   nginx:
     hostname: Nginx
     container_name: Nginx-COS-Test
@@ -43,8 +42,36 @@ services:
       - backend
       - st1010
       - st1011
-
   ## Backend ##
+  # Redis #
+  redis:
+    image: redis:6.2.5-alpine
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+  celery:
+    image: backend/celery:Testing
+    hostname: Celery-Worker
+    container_name: Celery-Worker-COS-Test
+    build:
+      context: .
+      dockerfile: ./Backend/Docker/Development/Dockerfile
+    command: celery -A Config worker -l INFO
+    restart: always
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+    volumes:
+      - type: bind
+        source: ./Backend
+        target: /Backend
+    # Check ENV file in host directory (relative)
+    env_file:
+      - ./Backend/Docker/Development/.env
+    depends_on:
+      - redis
+      - backend
+      - postgres_cos
   # Django #
   backend:
     image: backend/django:testing
@@ -58,7 +85,8 @@ services:
     build:
       context: .
       dockerfile: ./Backend/Docker/Testing/Dockerfile
-    volumes:
+    command: gunicorn --chdir /Backend --bind 0.0.0.0:8000 --reload Config.wsgi:application
+      volumes:
       - volume_django_static:/Backend/Django/static
       - volume_django_media:/Backend/Django/media
     # Check ENV file in host directory (relative)
@@ -88,37 +116,37 @@ services:
   ## Frontend Apps ##
   # React Apps #
   st1010:
-      image: cos-apps/st1010:testing
-      hostname: ST1010
-      container_name: React-ST1010-Test
-      build:
-          # Relative directory
-          context: ./Apps/ST1010
-          dockerfile: ./Docker/Testing/Dockerfile
-          args:
-            REACT_APP_API_SERVER: http://cos.omr/
-      networks:
-        - network_nginx_rev_proxy
-        - network_st1010
-      ports:
-        - 3000:80
-      environment:
-        - REACT_APP_API_SERVER=http://cos.omr/
+    image: cos-apps/st1010:testing
+    hostname: ST1010
+    container_name: React-ST1010-Test
+    build:
+      # Relative directory
+      context: ./Apps/ST1010
+      dockerfile: ./Docker/Testing/Dockerfile
+      args:
+        REACT_APP_API_SERVER: http://cos.omr/
+    networks:
+      - network_nginx_rev_proxy
+      - network_st1010
+    ports:
+      - 3000:80
+    environment:
+      - REACT_APP_API_SERVER=http://cos.omr/
 
   st1011:
-      image: cos-apps/st1011:testing
-      hostname: ST1011
-      container_name: React-ST1011-Test
-      build:
-          # Relative directory
-          context: ./Apps/ST1011
-          dockerfile: ./Docker/Testing/Dockerfile
-          args:
-            REACT_APP_API_SERVER: http://cos.omr/
-      networks:
-        - network_nginx_rev_proxy
-        - network_st1011
-      ports:
-        - 3001:80
-      environment: 
-        - REACT_APP_API_SERVER=http://cos.omr/
+    image: cos-apps/st1011:testing
+    hostname: ST1011
+    container_name: React-ST1011-Test
+    build:
+      # Relative directory
+      context: ./Apps/ST1011
+      dockerfile: ./Docker/Testing/Dockerfile
+      args:
+        REACT_APP_API_SERVER: http://cos.omr/
+    networks:
+      - network_nginx_rev_proxy
+      - network_st1011
+    ports:
+      - 3001:80
+    environment:
+      - REACT_APP_API_SERVER=http://cos.omr/
