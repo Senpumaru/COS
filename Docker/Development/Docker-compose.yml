@@ -63,6 +63,9 @@ services:
       - type: bind
         source: ./Backend
         target: /Backend
+        # Same as Backend volumes
+      - volume_django_static:/Backend/Django/static
+      - volume_django_media:/Backend/Django/media
     # Check ENV file in host directory (relative)
     env_file:
       - ./Backend/Docker/Development/.env
