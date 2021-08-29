@@ -7,3 +7,6 @@
 [submodule "Apps/ST1011"]
 	path = Apps/ST1011
 	url = https://github.com/Senpumaru/COS-ST1011.git
+[submodule "Apps/ST0001"]
+	path = Apps/ST0001
+	url = https://github.com/Senpumaru/COS-ST0001.git

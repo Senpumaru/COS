@@ -6,6 +6,8 @@ networks:
     driver: bridge
   network_postgres_cos:
     driver: bridge
+  network_st0001:
+    driver: bridge
   network_st1010:
     driver: bridge
   network_st1011:
@@ -118,6 +120,24 @@ services:
       - ./Database/Development/PostgresAlpha/.env
   ## Frontend Apps ##
   # React Apps #
+  st0001:
+    image: cos-apps/st0001:development
+    hostname: ST0001
+    container_name: React-ST0001-Dev
+    restart: unless-stopped
+    build:
+      # Relative directory
+      context: ./Apps/ST0001
+      dockerfile: ./Docker/Development/Dockerfile
+    networks:
+      - network_nginx_rev_proxy
+      - network_st0001
+    ports:
+      - 3000:3000
+    volumes:
+      - type: bind
+        source: ./Apps/ST0001
+        target: /usr/app
   st1010:
     image: cos-apps/st1010:development
     hostname: ST1010
@@ -131,7 +151,7 @@ services:
       - network_nginx_rev_proxy
       - network_st1010
     ports:
-      - 3000:3000
+      - 3010:3000
     volumes:
       - type: bind
         source: ./Apps/ST1010
@@ -149,7 +169,7 @@ services:
       - network_nginx_rev_proxy
       - network_st1011
     ports:
-      - 3001:3000
+      - 3011:3000
     volumes:
       - type: bind
         source: ./Apps/ST1011
