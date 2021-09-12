@@ -4,6 +4,8 @@ version: "3.2"
 networks:
   network_nginx_rev_proxy:
     driver: bridge
+  # network_mongodb_pcg:
+    # driver: bridge
   network_postgres_cos:
     driver: bridge
   network_st0001:
@@ -12,6 +14,8 @@ networks:
     driver: bridge
   network_st1011:
     driver: bridge
+  network_st3001:
+    driver: bridge
 
 volumes:
   # Static / media volume will be mounted to both Nginx and Django runserver.
@@ -19,6 +23,8 @@ volumes:
   volume_django_media:
   # PostgreSQL data volumes will be mounted to PostgreSQL services
   postgres_cos_volume:
+  # MongoDB data volumes will be mounted to MongoDB services
+  # mongodb_volume:
 
 services:
   ## Nginx Service ##
@@ -39,23 +45,90 @@ services:
       - volume_django_media:/Backend/Django/media
     # Wait for other services to "Compose" #
     depends_on:
-      - backend
+      - django_rest
       - st1010
       - st1011
+      - st3001
+
   ## Backend ##
+
+  # Django #
+  django_rest:
+    image: backend/django:development
+    hostname: DjangoBackend
+    container_name: Backend-COS-Dev
+    restart: unless-stopped
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+      - network_postgres_cos
+    build:
+      context: .
+      dockerfile: ./Backend/Django/Docker/Development/Dockerfile
+    command: gunicorn --chdir /Backend --bind 0.0.0.0:8000 --reload Config.wsgi:application
+    volumes:
+      - type: bind
+        source: ./Backend
+        target: /Backend
+      - volume_django_static:/Backend/Django/static
+      - volume_django_media:/Backend/Django/media
+    # Check ENV file in host directory (relative)
+    env_file:
+      - ./Backend/Django/Docker/Development/.env
+    depends_on:
+      - postgres_cos
+
+  ## Databases ##
+  # MongoDB #
+  # mongodb_pcg:
+  #   image: mongo:4.2-rc-bionic
+  #   hostname: MongoPCG
+  #   container_name: MongoDB-PCG-Dev
+  #   restart: unless-stopped
+  #   networks: # Connect to the bridge
+  #     - network_mongodb_pcg
+  #   volumes:
+  #     - mongodb_volume:/data/db
+  #   ports:
+  #     - 27017:27017
+  #   env_file:
+  #     - ./Database/Development/MongoDB/.env
+
+  # PostgreSQL #
+  postgres_cos:
+    image: postgres/cos:development
+    hostname: PostgresCOS
+    container_name: PostgreSQL-COS-Dev
+    restart: unless-stopped
+    expose:
+      - "5432"
+
+    build:
+      context: .
+      dockerfile: ./Database/Development/PostgresAlpha/Dockerfile
+    networks: # Connect to the bridge
+      - network_postgres_cos
+
+    volumes:
+      - postgres_cos_volume:/var/lib/postgresql/data/
+    # Check ENV for Database values
+    env_file:
+      - ./Database/Development/PostgresAlpha/.env
+
   # Redis #
   redis:
     image: redis:6.2.5-alpine
     # Custom network
     networks:
       - network_nginx_rev_proxy
+
   celery:
     image: backend/celery:development
     hostname: Celery-Worker
     container_name: Celery-Worker-COS-Dev
     build:
       context: .
-      dockerfile: ./Backend/Docker/Development/Dockerfile
+      dockerfile: ./Backend/Django/Docker/Development/Dockerfile
     command: celery -A Config worker -l INFO
     restart: always
     # Custom network
@@ -70,54 +143,12 @@ services:
       - volume_django_media:/Backend/Django/media
     # Check ENV file in host directory (relative)
     env_file:
-      - ./Backend/Docker/Development/.env
+      - ./Backend/Django/Docker/Development/.env
     depends_on:
+      - django_rest
       - redis
-      - backend
-      - postgres_cos
-  # Django #
-  backend:
-    image: backend/django:development
-    hostname: DjangoBackend
-    container_name: Backend-COS-Dev
-    restart: unless-stopped
-    # Custom network
-    networks:
-      - network_nginx_rev_proxy
-      - network_postgres_cos
-    build:
-      context: .
-      dockerfile: ./Backend/Docker/Development/Dockerfile
-    command: gunicorn --chdir /Backend --bind 0.0.0.0:8000 --reload Config.wsgi:application
-    volumes:
-      - type: bind
-        source: ./Backend
-        target: /Backend
-      - volume_django_static:/Backend/Django/static
-      - volume_django_media:/Backend/Django/media
-    # Check ENV file in host directory (relative)
-    env_file:
-      - ./Backend/Docker/Development/.env
-    depends_on:
       - postgres_cos
 
-  ## Databases ##
-  postgres_cos:
-    image: postgres/cos:development
-    hostname: PostgresCOS
-    container_name: PostgreSQL-COS-Dev
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: ./Database/Development/PostgresAlpha/Dockerfile
-    networks: # Connect to the bridge
-      - network_postgres_cos
-    # Port 5432 is exposed in the ENV files and DATABASE settings
-    volumes:
-      - postgres_cos_volume:/var/lib/postgresql/data/
-    # Check ENV for Database values
-    env_file:
-      - ./Database/Development/PostgresAlpha/.env
   ## Frontend Apps ##
   # React Apps #
   st0001:
@@ -173,4 +204,24 @@ services:
     volumes:
       - type: bind
         source: ./Apps/ST1011
+        target: /usr/app
+  # Nextjs Apps #
+  st3001:
+    image: cos-apps/st3001:development
+    hostname: ST3001
+    container_name: Next-ST3001-Dev
+    restart: unless-stopped
+    build:
+      # Relative directory
+      context: ./Apps/ST3001
+      dockerfile: ./Docker/Development/Dockerfile
+    networks:
+      - network_postgres_cos
+      - network_nginx_rev_proxy
+      - network_st3001
+    ports:
+      - 3031:3000
+    volumes:
+      - type: bind
+        source: ./Apps/ST3001
         target: /usr/app
