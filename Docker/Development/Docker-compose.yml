@@ -47,6 +47,7 @@ services:
     depends_on:
       - django_rest
       - st1010
+      - st0201
       - st1011
       - st3001
 
@@ -78,50 +79,6 @@ services:
     depends_on:
       - postgres_cos
 
-  ## Databases ##
-  # MongoDB #
-  # mongodb_pcg:
-  #   image: mongo:4.2-rc-bionic
-  #   hostname: MongoPCG
-  #   container_name: MongoDB-PCG-Dev
-  #   restart: unless-stopped
-  #   networks: # Connect to the bridge
-  #     - network_mongodb_pcg
-  #   volumes:
-  #     - mongodb_volume:/data/db
-  #   ports:
-  #     - 27017:27017
-  #   env_file:
-  #     - ./Database/Development/MongoDB/.env
-
-  # PostgreSQL #
-  postgres_cos:
-    image: postgres/cos:development
-    hostname: PostgresCOS
-    container_name: PostgreSQL-COS-Dev
-    restart: unless-stopped
-    expose:
-      - "5432"
-
-    build:
-      context: .
-      dockerfile: ./Database/Development/PostgresAlpha/Dockerfile
-    networks: # Connect to the bridge
-      - network_postgres_cos
-
-    volumes:
-      - postgres_cos_volume:/var/lib/postgresql/data/
-    # Check ENV for Database values
-    env_file:
-      - ./Database/Development/PostgresAlpha/.env
-
-  # Redis #
-  redis:
-    image: redis:6.2.5-alpine
-    # Custom network
-    networks:
-      - network_nginx_rev_proxy
-
   celery:
     image: backend/celery:development
     hostname: Celery-Worker
@@ -148,6 +105,52 @@ services:
       - django_rest
       - redis
       - postgres_cos
+
+  ## Databases ##
+  # MongoDB #
+  # mongodb_pcg:
+  #   image: mongo:4.2-rc-bionic
+  #   hostname: MongoPCG
+  #   container_name: MongoDB-PCG-Dev
+  #   restart: unless-stopped
+  #   networks: # Connect to the bridge
+  #     - network_mongodb_pcg
+  #   volumes:
+  #     - mongodb_volume:/data/db
+  #   ports:
+  #     - 27017:27017
+  #   env_file:
+  #     - ./Database/Development/MongoDB/.env
+
+  # Redis #
+  redis:
+    image: redis:6.2.5-alpine
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+  # PostgreSQL #
+  postgres_cos:
+    image: postgres/cos:development
+    hostname: PostgresCOS
+    container_name: PostgreSQL-COS-Dev
+    restart: unless-stopped
+    expose:
+      - "5432"
+
+    build:
+      context: .
+      dockerfile: ./Database/Development/PostgresAlpha/Dockerfile
+    networks: # Connect to the bridge
+      - network_postgres_cos
+
+    volumes:
+      - postgres_cos_volume:/var/lib/postgresql/data/
+    # Check ENV for Database values
+    env_file:
+      - ./Database/Development/PostgresAlpha/.env
+
+
+  
 
   ## Frontend Apps ##
   # React Apps #
