@@ -208,6 +208,7 @@ services:
       - type: bind
         source: ./Apps/ST1011
         target: /usr/app
+        
   # Nextjs Apps #
   st3001:
     image: cos-apps/st3001:development
