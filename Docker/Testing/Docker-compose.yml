@@ -76,7 +76,7 @@ services:
       - volume_django_media:/Backend/Django/media
     # Check ENV file in host directory (relative)
     env_file:
-      - ./Backend/Django/Docker/Development/.env
+      - ./Backend/Django/Docker/Testing/.env
     depends_on:
       - postgres_cos
 
@@ -87,7 +87,7 @@ services:
     container_name: Celery-Worker-COS-Test
     build:
       context: .
-      dockerfile: ./Backend/Docker/Development/Dockerfile
+      dockerfile: ./Backend/Django/Docker/Testing/Dockerfile
     command: celery -A Config worker -l INFO
     restart: always
     # Custom network
@@ -99,7 +99,7 @@ services:
         target: /Backend
     # Check ENV file in host directory (relative)
     env_file:
-      - ./Backend/Docker/Development/.env
+      - ./Backend/Django/Docker/Testing/.env
     depends_on:
       - redis
       - backend
