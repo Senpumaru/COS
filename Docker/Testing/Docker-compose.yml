@@ -37,7 +37,7 @@ services:
     networks:
       - network_nginx_rev_proxy
       - network_st0001
-      - network_st0201
+      
       - network_st1010
       - network_st1011
     ports:
@@ -51,7 +51,7 @@ services:
     depends_on:
       - backend
       - st0001
-      - st0201
+      
       - st1010
       - st1011
 
