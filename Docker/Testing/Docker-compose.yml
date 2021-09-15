@@ -69,7 +69,7 @@ services:
       - network_postgres_cos
     build:
       context: .
-      dockerfile: ./Backend/Docker/Testing/Dockerfile
+      dockerfile: ./Backend/Django/Docker/Testing/Dockerfile
     command: gunicorn --chdir /Backend --bind 0.0.0.0:8000 --reload Config.wsgi:application
     volumes:
       - volume_django_static:/Backend/Django/static
