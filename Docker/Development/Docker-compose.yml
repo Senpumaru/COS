@@ -14,6 +14,8 @@ networks:
     driver: bridge
   network_st1011:
     driver: bridge
+  network_st1021:
+    driver: bridge
   network_st3001:
     driver: bridge
 
@@ -47,8 +49,9 @@ services:
     depends_on:
       - django_rest
       - st1010
-      - st0201
+      
       - st1011
+      - st1021
       - st3001
 
   ## Backend ##
@@ -207,6 +210,24 @@ services:
     volumes:
       - type: bind
         source: ./Apps/ST1011
+        target: /usr/app
+  st1021:
+    image: cos-apps/st1021:development
+    hostname: ST1021
+    container_name: React-ST1021-Dev
+    restart: unless-stopped
+    build:
+      # Relative directory
+      context: ./Apps/ST1021
+      dockerfile: ./Docker/Development/Dockerfile
+    networks:
+      - network_nginx_rev_proxy
+      - network_st1021
+    ports:
+      - 3021:3000
+    volumes:
+      - type: bind
+        source: ./Apps/ST1021
         target: /usr/app
         
   # Nextjs Apps #
