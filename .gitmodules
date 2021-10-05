@@ -1,12 +1,15 @@
-[submodule "Backend"]
-	path = Backend
-	url = https://github.com/Senpumaru/COS-Backend.git
+[submodule "REST"]
+	path = Backend/Django
+	url = git@github.com:Senpumaru/COS-REST.git
+[submodule "GraphQL"]
+	path = Backend/Apollo
+	url = git@github.com:Senpumaru/PCG-GraphQL.git
+[submodule "Apps/ST0001"]
+	path = Apps/ST0001
+	url = git@github.com:Senpumaru/COS-ST0001.git
 [submodule "Apps/ST1010"]
 	path = Apps/ST1010
 	url = https://github.com/Senpumaru/COS-ST1010.git
 [submodule "Apps/ST1011"]
 	path = Apps/ST1011
 	url = https://github.com/Senpumaru/COS-ST1011.git
-[submodule "Apps/ST0001"]
-	path = Apps/ST0001
-	url = git@github.com:Senpumaru/COS-ST0001.git
