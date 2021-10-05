@@ -13,3 +13,6 @@
 [submodule "Apps/ST1011"]
 	path = Apps/ST1011
 	url = https://github.com/Senpumaru/COS-ST1011.git
+[submodule "Backend/Django"]
+	path = Backend/Django
+	url = git@github.com:Senpumaru/COS-REST.git
