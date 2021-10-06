@@ -1,9 +1,6 @@
 [submodule "REST"]
 	path = Backend/Django
 	url = git@github.com:Senpumaru/COS-REST.git
-[submodule "GraphQL"]
-	path = Backend/Apollo
-	url = git@github.com:Senpumaru/PCG-GraphQL.git
 [submodule "Apps/ST0001"]
 	path = Apps/ST0001
 	url = git@github.com:Senpumaru/COS-ST0001.git
@@ -16,3 +13,6 @@
 [submodule "Backend/Django"]
 	path = Backend/Django
 	url = git@github.com:Senpumaru/COS-REST.git
+[submodule "Backend/Apollo"]
+	path = Backend/Apollo
+	url = git@github.com:Senpumaru/PCG-GraphQL.git
