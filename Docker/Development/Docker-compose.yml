@@ -1,4 +1,4 @@
-version: "3.2"
+version: "3.6"
 
 ## Custom network ##
 networks:
@@ -48,13 +48,13 @@ services:
     # Wait for other services to "Compose" #
     depends_on:
       - django_rest
+      - apollo_graphql
       - st1010
-      
       - st1011
       - st1021
       - st3001
 
-  ## Backend ##
+  ## Backends ##
 
   # Django #
   django_rest:
@@ -72,10 +72,35 @@ services:
     command: gunicorn --chdir /Backend --bind 0.0.0.0:8000 --reload Config.wsgi:application
     volumes:
       - type: bind
-        source: ./Backend
-        target: /Backend
+        source: ./Backend/Django
+        target: /Backend/Django
       - volume_django_static:/Backend/Django/static
       - volume_django_media:/Backend/Django/media
+    # Check ENV file in host directory (relative)
+    env_file:
+      - ./Backend/Django/Docker/Development/.env
+    depends_on:
+      - postgres_cos
+
+  # Apollo (JS) #
+  apollo_graphql:
+    image: backend/apollo:development
+    hostname: ApolloBackend
+    container_name: Backend-PCG-Dev
+    restart: unless-stopped
+    expose:
+      - 9000
+    # Custom network
+    networks:
+      - network_nginx_rev_proxy
+      - network_postgres_cos
+    build:
+      context: ./Backend/Apollo
+      dockerfile: ./Docker/Development/Dockerfile
+    volumes:
+      - type: bind
+        source: ./Backend/Apollo
+        target: /Backend/Apollo
     # Check ENV file in host directory (relative)
     env_file:
       - ./Backend/Django/Docker/Development/.env
@@ -86,11 +111,12 @@ services:
     image: backend/celery:development
     hostname: Celery-Worker
     container_name: Celery-Worker-COS-Dev
+    restart: unless-stopped
+    
     build:
       context: .
       dockerfile: ./Backend/Django/Docker/Development/Dockerfile
     command: celery -A Config worker -l INFO
-    restart: always
     # Custom network
     networks:
       - network_nginx_rev_proxy
@@ -173,6 +199,7 @@ services:
       - type: bind
         source: ./Apps/ST0001
         target: /usr/app
+
   st1010:
     image: cos-apps/st1010:development
     hostname: ST1010
@@ -209,6 +236,7 @@ services:
       - type: bind
         source: ./Apps/ST1011
         target: /usr/app
+
   st1021:
     image: cos-apps/st1021:development
     hostname: ST1021
